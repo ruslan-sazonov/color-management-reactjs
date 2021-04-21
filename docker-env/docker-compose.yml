@@ -1,0 +1,46 @@
+version: "3.7"
+
+services:
+    colors-app-nginx:
+        image: nginx:1.17-alpine
+        container_name: colors-app-nginx
+        restart: unless-stopped
+        ports:
+            - 80:80
+        volumes:
+            - ../apps:/var/www
+            - ./nginx:/etc/nginx/conf.d
+        depends_on:
+            - colors-app-php
+            - colors-app-node
+        networks:
+            - colors-app
+
+    colors-app-php:
+        build:
+            context: ./php-fpm
+            dockerfile: Dockerfile
+        container_name: colors-app-php
+        restart: unless-stopped
+        working_dir: /var/www/
+        volumes:
+            - ../apps:/var/www
+        networks:
+            - colors-app
+
+    colors-app-node:
+        image: node:current-alpine
+        container_name: colors-app-node
+        restart: unless-stopped
+        working_dir: /home/node/app
+        volumes:
+            - ../apps/colors-app:/home/node/app
+        environment:
+            NODE_ENV: development
+        command: "yarn start"
+        networks:
+            - colors-app
+
+networks:
+    colors-app:
+        driver: bridge
